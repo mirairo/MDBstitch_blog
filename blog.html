@@ -1,0 +1,50 @@
+
+<html>
+  <head>
+    <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.0.0/stitch.js"></script>
+  </head>
+
+  <body onload="displayCommentsOnLoad()">
+    <h3>Aspirational jkLee blog post</h3>
+    <div id="content">
+      I like to write about technology with MongoDB stitch, because I want to get
+      on the front page of hacker news from July 21, 2018 (in a good way).
+    </div>
+    <hr>
+    <div id="comments"></div>
+  </body>
+  <script>
+
+    const client = stitch.Stitch.initializeDefaultAppClient('blog_comments-dzgqw');
+  
+    const db = client.getServiceClient(stitch.RemoteMongoClient.factory,
+      "mongodb-atlas").db('blog');
+      function displayCommentsOnLoad() {
+  client.auth
+    .loginWithCredential(new stitch.AnonymousCredential())
+    .then(displayComments)
+    .catch(console.error);
+}
+
+function displayComments() {
+  db.collection('comments').find({}, {limit: 1000}).asArray()
+    .then(docs => {
+      const html = docs.map(c => "<div>" + c.comment + "</div>").join("");
+      document.getElementById("comments").innerHTML = html;
+    });
+}
+function addComment() {
+  const commentEl = document.getElementById('new_comment');
+  const comment = {
+    owner_id : client.auth.user.id,
+    comment: commentEl.value
+  }
+  db.collection('comments').insertOne(comment)
+    .then(displayComments);
+  commentEl.value = '';
+}
+  </script>
+  <hr>
+  Add comment:
+  <input id="new_comment"><input type="submit" onClick="addComment()">
+</html>
